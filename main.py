@@ -1,4 +1,4 @@
-# Copyright 2018 Google LLC
+ 
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,25 @@
 
 # [START gae_python38_render_template]
 # [START gae_python3_render_template]
+from google.cloud import datastore
+
+datastore_client = datastore.Client()
+
+def store_time(dt):
+    entity = datastore.Entity(key=datastore_client.key("visit"))
+    entity.update({"timestamp": dt})
+
+    datastore_client.put(entity)
+
+
+def fetch_times(limit):
+    query = datastore_client.query(kind="visit")
+    query.order = ["-timestamp"]
+
+    times = query.fetch(limit=limit)
+
+    return times
+
 import datetime
 
 from flask import Flask, render_template
