@@ -23,7 +23,7 @@ window.addEventListener('load', function () {
   };
 
   // FirebaseUI config.
-  const uiConfig = {
+  var uiConfig = {
     signInSuccessUrl: '/',
     signInOptions: [
       // Comment out any lines corresponding to providers you did not check in
@@ -34,6 +34,7 @@ window.addEventListener('load', function () {
       //firebase.auth.TwitterAuthProvider.PROVIDER_ID,
       //firebase.auth.GithubAuthProvider.PROVIDER_ID,
       //firebase.auth.PhoneAuthProvider.PROVIDER_ID
+
     ],
     // Terms of service url.
     tosUrl: '<your-tos-url>'
@@ -51,12 +52,12 @@ window.addEventListener('load', function () {
         // SECURITY NOTE: As cookies can easily be modified, only put the
         // token (which is verified server-side) in a cookie; do not add other
         // user information.
-        document.cookie = `token=${token}; Secure; SameSite=Strict`;
+        document.cookie = "token=" + token;
       });
     } else {
       // User is signed out.
       // Initialize the FirebaseUI Widget using Firebase.
-      const ui = new firebaseui.auth.AuthUI(firebase.auth());
+      var ui = new firebaseui.auth.AuthUI(firebase.auth());
       // Show the Firebase login button.
       ui.start('#firebaseui-auth-container', uiConfig);
       // Update the login state indicators.
@@ -66,12 +67,8 @@ window.addEventListener('load', function () {
       document.cookie = "token=";
     }
   }, function (error) {
-    console.error('Authentication error:', error);
-    // Optionally, update the UI to show the error
-    const errorElement = document.getElementById('error-message');
-    if (errorElement) {
-      errorElement.textContent = `Unable to log in: ${error.message}`;
-    }
+    console.log(error);
+    alert('Unable to log in: ' + error)
   });
 });
 // [END gae_python3_auth_javascript]
