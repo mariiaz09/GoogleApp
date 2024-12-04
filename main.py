@@ -12,14 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# [START gae_python38_render_template]
-# [START gae_python3_render_template]
+import datetime
 from flask import Flask, render_template, request
 from google.auth.transport import requests
 from google.cloud import datastore
 import google.oauth2.id_token
 
 firebase_request_adapter = requests.Request()
+app = Flask(__name__)
+
+datastore_client = datastore.Client()
+
+def store_time(dt):
+    entity = datastore.Entity(key=datastore_client.key("visit"))
+    entity.update({"timestamp": dt})
+    datastore_client.put(entity)
+
+def fetch_times(limit):
+    query = datastore_client.query(kind="visit")
+    query.order = ["-timestamp"]
+    times = query.fetch(limit=limit)
+    return times
+
 @app.route("/")
 def root():
     # Verify Firebase auth.
@@ -30,85 +44,21 @@ def root():
 
     if id_token:
         try:
-            # Verify the token against the Firebase Auth API. This example
-            # verifies the token on each page load. For improved performance,
-            # some applications may wish to cache results in an encrypted
-            # session store (see for instance
-            # http://flask.pocoo.org/docs/1.0/quickstart/#sessions).
+            # Verify the token against the Firebase Auth API.
             claims = google.oauth2.id_token.verify_firebase_token(
                 id_token, firebase_request_adapter
             )
         except ValueError as exc:
-            # This will be raised if the token is expired or any other
-            # verification checks fail.
+            # This will be raised if the token is expired or any other verification fails.
             error_message = str(exc)
 
-        # Record and fetch the recent times a logged-in user has accessed
-        # the site. This is currently shared amongst all users, but will be
-        # individualized in a following step.
+        # Record and fetch the recent times a logged-in user has accessed the site.
         store_time(datetime.datetime.now(tz=datetime.timezone.utc))
         times = fetch_times(10)
 
     return render_template(
         "index.html", user_data=claims, error_message=error_message, times=times
     )
-
-from google.cloud import datastore
-
-datastore_client = datastore.Client()
-
-def store_time(dt):
-    entity = datastore.Entity(key=datastore_client.key("visit"))
-    entity.update({"timestamp": dt})
-
-    datastore_client.put(entity)
-
-
-def fetch_times(limit):
-    query = datastore_client.query(kind="visit")
-    query.order = ["-timestamp"]
-
-    times = query.fetch(limit=limit)
-
-    return times
-
-import datetime
-
-from flask import Flask, render_template
-
-app = Flask(__name__)
-
-from google.cloud import datastore
-
-datastore_client = datastore.Client()
-
-def store_time(dt):
-    entity = datastore.Entity(key=datastore_client.key("visit"))
-    entity.update({"timestamp": dt})
-
-    datastore_client.put(entity)
-
-
-def fetch_times(limit):
-    query = datastore_client.query(kind="visit")
-    query.order = ["-timestamp"]
-
-    times = query.fetch(limit=limit)
-
-    return times
-
-
-@app.route("/")
-def root():
-    # Store the current access time in Datastore.
-    store_time(datetime.datetime.now(tz=datetime.timezone.utc))
-
-    # Fetch the most recent 10 access times from Datastore.
-    times = fetch_times(10)
-
-    return render_template("index.html", times=times)
-
-
 
 if __name__ == "__main__":
     # This is used when running locally only. When deploying to Google App
@@ -119,5 +69,3 @@ if __name__ == "__main__":
     # http://flask.pocoo.org/docs/1.0/quickstart/#static-files. Once deployed,
     # App Engine itself will serve those files as configured in app.yaml.
     app.run(host="127.0.0.1", port=8080, debug=True)
-# [END gae_python3_render_template]
-# [END gae_python38_render_template]
